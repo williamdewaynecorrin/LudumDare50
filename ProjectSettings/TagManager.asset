@@ -15,11 +15,11 @@ TagManager:
   - 
   - Post Process
   - Ground
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Player
+  - PlayerProjectile
+  - Enemy
+  - EnemyProjectile
+  - Cursor
   - 
   - 
   - 

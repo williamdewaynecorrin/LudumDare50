@@ -26,6 +26,17 @@ public class PlayerController : MonoBehaviour
     public ScrollTexture[] treads;
     public float treadspeed = 1.0f;
 
+    [Header("Shooting")]
+    public TimerRT shootcooldown;
+    public int maxtrash = 100;
+    public int trashballcost = 5;
+    public float firespeed = 1.0f;
+    public Projectile trashballprefab;
+    public Transform firetransform;
+
+    [Header("UI")]
+    public FloatingUI floatingui;
+
     private new PlayerCamera camera;
     private new Rigidbody rigidbody;
     private Cursor3D cursor;
@@ -37,17 +48,25 @@ public class PlayerController : MonoBehaviour
     private Vector3 center;
     private GroundState grounded = GroundState.Grounded;
     private GroundState prevgrounded;
+    private int currenttrash = 0;
+    private Vector3 tocursor;
+
+    public Vector3 Center => center;
 
     void Awake()
     {
         rigidbody = GetComponent<Rigidbody>();
         prevgrounded = grounded;
+        center = transform.position + collider.center;
+        shootcooldown.Init();
+        shootcooldown.time = 0;
     }
 
     void Start()
     {
         camera = GameObject.FindObjectOfType<PlayerCamera>();
         cursor = GameObject.FindObjectOfType<Cursor3D>();
+        floatingui.SetTarget(this);
     }
 
     void Update()
@@ -62,8 +81,12 @@ public class PlayerController : MonoBehaviour
 
         }
 
-        Vector3 tocursor = cursor.Position - head.position;
+        shootcooldown.Tick(Time.deltaTime);
+
+        tocursor = cursor.Position - head.position;
         tocursor.y = 0f;
+        tocursor.Normalize();
+
         Quaternion targetheadrot = Quaternion.LookRotation(tocursor) * Quaternion.Euler(headorientation);
 
         head.rotation = Quaternion.Slerp(head.rotation, targetheadrot, headsmoothing * Time.deltaTime);
@@ -83,6 +106,20 @@ public class PlayerController : MonoBehaviour
         {
             grounded = GroundState.Grounded;
             rigidbody.velocity = Vector3.zero;
+
+            if (GameInput.Fire() && shootcooldown.TimerReached() && currenttrash > 0)
+            {
+                shootcooldown.Reset();
+
+                Projectile trashball = GameObject.Instantiate(trashballprefab, firetransform.position, firetransform.rotation);
+                trashball.Initialize(tocursor, firespeed, velocity);
+                currenttrash -= trashballcost;
+
+                if (currenttrash < 0)
+                    currenttrash = 0;
+
+                UpdateUI();
+            }
         }
 
         // -- we have changed grounded this frame
@@ -121,6 +158,17 @@ public class PlayerController : MonoBehaviour
         prevgrounded = grounded;
     }
 
+    public float CameraPredictionSimilarity()
+    {
+        return Vector3.Dot(velocity.normalized, Vector3.back) > 0.9f ? 10.0f : 1.0f;
+    }
+
+    public Vector3 CameraPrediction(float mult)
+    {
+        // -- harder to see in back
+        return velocity * mult;
+    }
+
     private void PositionOnGround(RaycastHit hit)
     {
         transform.position = hit.point + hit.normal * collider.radius - collider.center;
@@ -139,5 +187,33 @@ public class PlayerController : MonoBehaviour
     {
         Grounded = 0,
         InAir = 1
+    }
+
+    private void UpdateUI()
+    {
+        float fillratio = (float)currenttrash / (float)maxtrash;
+        floatingui.SetFill(fillratio);
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        Collectable c = other.GetComponent<Collectable>();
+        if(c != null)
+        {
+            if(c.type == CollectableType.Trash)
+            {
+                currenttrash += c.value;
+                currenttrash = currenttrash > maxtrash ? currenttrash : currenttrash;
+
+                UpdateUI();
+            }
+            c.Pickup();
+        }
+
+        Projectile p = other.GetComponent<Projectile>();
+        if (p != null)
+        {
+
+        }
     }
 }

@@ -17,4 +17,9 @@ public static class GameInput
         float d = (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) ? -1f : 0f;
         return u + d;
     }
+
+    public static bool Fire()
+    {
+        return Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0);
+    }
 }
