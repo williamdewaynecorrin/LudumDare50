@@ -791,7 +791,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1042024842
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1639,6 +1639,14 @@ PrefabInstance:
         type: 3}
       propertyPath: firespeed
       value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 309843893, guid: da9dbeecce68281458b8cb3ef5b00d96, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 2.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 309843893, guid: da9dbeecce68281458b8cb3ef5b00d96, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0.02
       objectReference: {fileID: 0}
     - target: {fileID: 309843897, guid: da9dbeecce68281458b8cb3ef5b00d96, type: 3}
       propertyPath: m_Camera

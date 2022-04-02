@@ -58,7 +58,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.3
-  far clip plane: 1000
+  far clip plane: 1500
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -158,7 +158,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   offset: {x: 0, y: 2.7, z: -6}
-  smooth: 4
+  backwardsoffset: {x: 0, y: 2.7, z: -10}
+  smooth: 5.5
   lookblend: 0.9
   predictionlerp: 4
   raycastmask:

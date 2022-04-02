@@ -49,9 +49,9 @@ public class PlayerController : MonoBehaviour
     private GroundState grounded = GroundState.Grounded;
     private GroundState prevgrounded;
     private int currenttrash = 0;
-    private Vector3 tocursor;
 
     public Vector3 Center => center;
+    public Vector3 FacingDir => facingdirection;
 
     void Awake()
     {
@@ -83,11 +83,13 @@ public class PlayerController : MonoBehaviour
 
         shootcooldown.Tick(Time.deltaTime);
 
-        tocursor = cursor.Position - head.position;
-        tocursor.y = 0f;
-        tocursor.Normalize();
+        Vector2 centerscreen = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+        Vector2 mousepos = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+        Vector2 screenpos = mousepos - centerscreen;
 
-        Quaternion targetheadrot = Quaternion.LookRotation(tocursor) * Quaternion.Euler(headorientation);
+        float cursorangle = Mathf.Atan2(screenpos.y, screenpos.x);
+        cursorangle *= Mathf.Rad2Deg;
+        Quaternion targetheadrot = Quaternion.AngleAxis(cursorangle, Vector3.down) * Quaternion.Euler(headorientation);
 
         head.rotation = Quaternion.Slerp(head.rotation, targetheadrot, headsmoothing * Time.deltaTime);
         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(facingdirection, Vector3.up), rotationsmoothing * Time.deltaTime);
@@ -112,7 +114,7 @@ public class PlayerController : MonoBehaviour
                 shootcooldown.Reset();
 
                 Projectile trashball = GameObject.Instantiate(trashballprefab, firetransform.position, firetransform.rotation);
-                trashball.Initialize(tocursor, firespeed, velocity);
+                trashball.Initialize(firetransform.forward, firespeed, velocity);
                 currenttrash -= trashballcost;
 
                 if (currenttrash < 0)
@@ -160,7 +162,7 @@ public class PlayerController : MonoBehaviour
 
     public float CameraPredictionSimilarity()
     {
-        return Vector3.Dot(velocity.normalized, Vector3.back) > 0.9f ? 10.0f : 1.0f;
+        return Vector3.Dot(velocity.normalized, Vector3.back) > 0.5f ? 10.0f : 1.0f;
     }
 
     public Vector3 CameraPrediction(float mult)

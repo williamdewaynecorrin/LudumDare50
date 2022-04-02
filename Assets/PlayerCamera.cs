@@ -8,6 +8,7 @@ public class PlayerCamera : MonoBehaviour
     private const float kMaxRaycastDist = 100f;
 
     public Vector3 offset;
+    public Vector3 backwardsoffset;
     public float smooth = 1.0f;
     [Range(0f, 1f)]
     public float lookblend;
@@ -40,7 +41,8 @@ public class PlayerCamera : MonoBehaviour
         lastpredictionval = Mathf.Lerp(lastpredictionval, target.CameraPredictionSimilarity(), predictionlerp * Time.fixedDeltaTime);
 
         // -- calculate target transform attributes
-        Vector3 targetpos = target.transform.position + offset + target.CameraPrediction(lastpredictionval * 2.0f);
+        Vector3 calculatedoffset = Mathf.Abs(lastpredictionval) > 2.0f ? backwardsoffset : offset;
+        Vector3 targetpos = target.transform.position + calculatedoffset + target.CameraPrediction(lastpredictionval * 2.0f);
 
         Vector3 totarget = (target.Center - transform.position).normalized;
         Quaternion targetrot = Quaternion.Slerp(Quaternion.LookRotation(Vector3.forward), 
