@@ -9,8 +9,10 @@ public class Cursor3D : MonoBehaviour
     private const float kBumpDistance = 0.001f;
     private const float kMaxRaycastDist = 650f;
     private new PlayerCamera camera;
+    private bool hasintersection = false;
 
     public Vector3 Position => transform.position;
+    public bool HasIntersection => hasintersection;
 
     void Start()
     {
@@ -25,6 +27,9 @@ public class Cursor3D : MonoBehaviour
         {
             transform.position = hit.point + hit.normal * kBumpDistance;
             transform.rotation = Quaternion.LookRotation(hit.normal);
+            hasintersection = true;
         }
+        else
+            hasintersection = false;
     }
 }

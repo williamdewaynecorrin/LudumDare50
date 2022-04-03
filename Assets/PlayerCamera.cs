@@ -12,6 +12,7 @@ public class PlayerCamera : MonoBehaviour
     public float smooth = 1.0f;
     [Range(0f, 1f)]
     public float lookblend;
+    public float offsetlerp = 4.0f;
     public float predictionlerp = 4.0f;
     public LayerMask raycastmask;
     public LayerMask playermask;
@@ -23,6 +24,7 @@ public class PlayerCamera : MonoBehaviour
     private float lastpredictionval = 1.0f;
     private Vector3 lasttargetpos;
     private Quaternion lasttargetrot;
+    private Vector3 currentoffset;
 
     public Camera Camera => camera;
 
@@ -34,6 +36,7 @@ public class PlayerCamera : MonoBehaviour
     void Start()
     {
         target = GameObject.FindObjectOfType<PlayerController>();
+        currentoffset = offset;
     }
 
     void FixedUpdate()
@@ -42,7 +45,9 @@ public class PlayerCamera : MonoBehaviour
 
         // -- calculate target transform attributes
         Vector3 calculatedoffset = Mathf.Abs(lastpredictionval) > 2.0f ? backwardsoffset : offset;
-        Vector3 targetpos = target.transform.position + calculatedoffset + target.CameraPrediction(lastpredictionval * 2.0f);
+        currentoffset = Vector3.Lerp(currentoffset, calculatedoffset, Time.deltaTime * offsetlerp);
+
+        Vector3 targetpos = target.transform.position + currentoffset + target.CameraPrediction(lastpredictionval * 2.0f);
 
         Vector3 totarget = (target.Center - transform.position).normalized;
         Quaternion targetrot = Quaternion.Slerp(Quaternion.LookRotation(Vector3.forward), 

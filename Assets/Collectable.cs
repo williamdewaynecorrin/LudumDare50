@@ -12,6 +12,19 @@ public class Collectable : MonoBehaviour
     public float rotatespeed = 1.0f;
     public new SphereCollider collider;
     public GameObject graphics;
+    public AudioClipSoundControl sfxpickup;
+
+    private new Rigidbody rigidbody;
+
+    void Awake()
+    {
+        rigidbody = GetComponent<Rigidbody>();
+    }
+
+    public void Shoot(Vector3 velocity)
+    {
+        rigidbody.velocity = velocity;
+    }
 
     void Update()
     {
@@ -25,8 +38,15 @@ public class Collectable : MonoBehaviour
     {
         collider.enabled = false;
         graphics.SetActive(false);
+        AudioManager.PlayClip2D(sfxpickup);
 
         GameObject.Destroy(this.gameObject);
+    }
+
+    void OnCollisionEnter(Collision c)
+    {
+        rigidbody.isKinematic = true;
+        collider.isTrigger = true;
     }
 }
 

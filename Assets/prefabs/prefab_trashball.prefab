@@ -61,6 +61,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rotationaxis: {x: 0.5, y: 1, z: -0.7}
   rotateamount: 5
+  sfxcollide:
+    sounds:
+    - clip: {fileID: 8300000, guid: c4e1add678f045f429f806864d178dc2, type: 3}
+      volumemult: 0.75
+    - clip: {fileID: 8300000, guid: 2efaad0bce85bc348bc1b4f3506626d7, type: 3}
+      volumemult: 0.75
+  particleimpact: {fileID: 467684012260819210, guid: f9ceef0d175d0d6449e49a745a1dc351,
+    type: 3}
 --- !u!54 &700873647092035369
 Rigidbody:
   m_ObjectHideFlags: 0

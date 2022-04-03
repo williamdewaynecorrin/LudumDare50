@@ -155,7 +155,7 @@
 			fixed flowgrayscale = emiflow.r;
 
 			// -- only allow emission value through if it meets the current threshold
-			if (emi.r <= _EmissionCutoff && emi.g <= _EmissionCutoff && emi.g <= _EmissionCutoff)
+			if (emi.r <= _EmissionCutoff && emi.g <= _EmissionCutoff && emi.b <= _EmissionCutoff)
 				emicol.rgb = 0;
 			else if (FlowPassesThresh(flowgrayscale) && flowgrayscale > _EmissionFlowCutoff)
 			{

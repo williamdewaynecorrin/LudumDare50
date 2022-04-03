@@ -78,9 +78,9 @@ Material:
     - _ContinuousAnimationOffset: 0.7
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
-    - _DistortionNoise: 1
-    - _DistortionSpeed: 1
-    - _DistortionStrength: 1
+    - _DistortionNoise: 2
+    - _DistortionSpeed: 0.39
+    - _DistortionStrength: 0.02
     - _DstBlend: 0
     - _DualColorAmp: 0.2
     - _DualColorOffset: 0.7
@@ -88,10 +88,10 @@ Material:
     - _DualColorUniform: 0
     - _EmissionCutoff: 0.989
     - _EmissionFlowCutoff: 0.001
-    - _EmissionFlowSpeed: 1.31
+    - _EmissionFlowSpeed: 0.57
     - _EmissionFlowThresh: 0.148
     - _EmissionMaxFlowValue: 0.995
-    - _EmissionTexScrollX: 0
+    - _EmissionTexScrollX: 0.1
     - _EmissionTexScrollY: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
@@ -115,4 +115,4 @@ Material:
     m_Colors:
     - _Color: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0.67913824, g: 0, b: 2.270603, a: 1}
-    - _EmissionColor2: {r: 0.5735392, g: 0, b: 6.964404, a: 1}
+    - _EmissionColor2: {r: 0.79030085, g: 0, b: 4.5412054, a: 1}

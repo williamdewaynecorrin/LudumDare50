@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: mat_wall_emi_01
-  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
+  m_Shader: {fileID: 4800000, guid: 28535c7cc9b8b6b4a8474866548cd63e, type: 3}
   m_ShaderKeywords: _EMISSION
   m_LightmapFlags: 1
   m_EnableInstancingVariants: 0
@@ -35,16 +35,32 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _DistortionTex:
+        m_Texture: {fileID: 2800000, guid: d7b43d813cd0a0041970cc504ddcdb3d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionFlow:
+        m_Texture: {fileID: 2800000, guid: 0aefee09238331145a69f8afb2b72e83, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _EmissionMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 9ce48115b0edf924f9292c8e965fc16d, type: 3}
+    - _EmissionTex:
+        m_Texture: {fileID: 2800000, guid: e16958d350748244e8aa6c466e52bbed, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: 956280d97d827b1448675649f32b348e, type: 3}
+        m_Scale: {x: 4.5, y: 3.5}
+        m_Offset: {x: 0.25, y: 0.25}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalMap:
+        m_Texture: {fileID: 2800000, guid: f220e96fe4d5d9a4c9983f39441e6ac1, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
@@ -57,21 +73,46 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _BumpScale: 1
+    - _ContinuousAnimation: 0
+    - _ContinuousAnimationAmp: 0.2
+    - _ContinuousAnimationOffset: 0.7
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
+    - _DistortionNoise: 0
+    - _DistortionSpeed: 0
+    - _DistortionStrength: 0
     - _DstBlend: 0
+    - _DualColorAmp: 0.5
+    - _DualColorOffset: 0.5
+    - _DualColorSpeed: 5
+    - _DualColorUniform: 0
+    - _EmissionCutoff: 0.974
+    - _EmissionFlowCutoff: 0.001
+    - _EmissionFlowSpeed: 0.76
+    - _EmissionFlowThresh: 0.339
+    - _EmissionMaxFlowValue: 1
+    - _EmissionTexScrollX: 0
+    - _EmissionTexScrollY: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
+    - _MainTexScrollX: 0
+    - _MainTexScrollY: 0
     - _Metallic: 0
     - _Mode: 0
+    - _NormalMapScrollX: 0
+    - _NormalMapScrollY: 0
+    - _NormalStrength: 1
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
+    - _UseEmissionUVs: 0
+    - _UseNormalUVs: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 0, g: 0, b: 0, a: 1}
-    - _EmissionColor: {r: 0, g: 1.8782998, b: 2.270603, a: 1}
+    - _Color: {r: 0.5849056, g: 0.49937698, b: 0.5791124, a: 1}
+    - _EmissionColor: {r: 1.5336025, g: 1.5336025, b: 1.5336025, a: 1}
+    - _EmissionColor2: {r: 0, g: 0.20209555, b: 3.031433, a: 1}

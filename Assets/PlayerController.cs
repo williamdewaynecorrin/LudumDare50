@@ -37,6 +37,20 @@ public class PlayerController : MonoBehaviour
     [Header("UI")]
     public FloatingUI floatingui;
 
+    [Header("Audio")]
+    public SmartAudio treadsaudio;
+    public AudioClip sfxtreadsmove;
+    [Range(0f,1f)]
+    public float treadsaudiomaxvolume = 0.7f;
+    public float treadsaudiominpitch = 0.8f;
+    public float treadsaudiomaxpitch = 1.8f;
+    public AudioClipSoundControlCollection sfxfire;
+
+    [Header("FX")]
+    public Timer treadsmoketimer;
+    public Transform treadsmokeparticleemitter;
+    public GameObject particlestreadsmoke;
+
     private new PlayerCamera camera;
     private new Rigidbody rigidbody;
     private Cursor3D cursor;
@@ -44,6 +58,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 facingdirection;
     private Vector2 input;
     private Vector3 velocity;
+    private Vector3 tocursor;
 
     private Vector3 center;
     private GroundState grounded = GroundState.Grounded;
@@ -58,8 +73,11 @@ public class PlayerController : MonoBehaviour
         rigidbody = GetComponent<Rigidbody>();
         prevgrounded = grounded;
         center = transform.position + collider.center;
+
         shootcooldown.Init();
         shootcooldown.time = 0;
+        treadsmoketimer.Init();
+        treadsmoketimer.frametime = 0;
     }
 
     void Start()
@@ -67,6 +85,9 @@ public class PlayerController : MonoBehaviour
         camera = GameObject.FindObjectOfType<PlayerCamera>();
         cursor = GameObject.FindObjectOfType<Cursor3D>();
         floatingui.SetTarget(this);
+
+        treadsaudio.SetClip(sfxtreadsmove);
+        treadsaudio.SetTargetVolume(treadsaudiomaxvolume);
     }
 
     void Update()
@@ -74,22 +95,42 @@ public class PlayerController : MonoBehaviour
         input = new Vector2(GameInput.HorizontalInput(), GameInput.VerticalInput());
         if(input == Vector2.zero)
         {
-
+            if(treadsaudio.State() != ESmartAudioState.Stopped && treadsaudio.State() != ESmartAudioState.Stopping)
+                treadsaudio.BeginStop(20);
         }
         else
         {
-
+            if(treadsaudio.State() != ESmartAudioState.Started && treadsaudio.State() != ESmartAudioState.Starting)
+                treadsaudio.BeginStart(sfxtreadsmove, true, 10);
         }
 
-        shootcooldown.Tick(Time.deltaTime);
+        if (!shootcooldown.TimerReached())
+            shootcooldown.Tick(Time.deltaTime);
 
-        Vector2 centerscreen = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-        Vector2 mousepos = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
-        Vector2 screenpos = mousepos - centerscreen;
+        float treadsaudiolerp = Mathf.InverseLerp(0f, maxspeed, velocity.magnitude);
+        float treadsaudiopitch = Mathf.Lerp(treadsaudiominpitch, treadsaudiomaxpitch, treadsaudiolerp);
+        treadsaudio.SetPitch(treadsaudiopitch);
 
-        float cursorangle = Mathf.Atan2(screenpos.y, screenpos.x);
-        cursorangle *= Mathf.Rad2Deg;
-        Quaternion targetheadrot = Quaternion.AngleAxis(cursorangle, Vector3.down) * Quaternion.Euler(headorientation);
+        Quaternion targetheadrot = Quaternion.identity;
+        if (!cursor.HasIntersection)
+        {
+            Vector2 centerscreen = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+            Vector2 mousepos = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+            Vector2 screenpos = mousepos - centerscreen;
+
+            float cursorangle = Mathf.Atan2(screenpos.y, screenpos.x);
+            cursorangle *= Mathf.Rad2Deg;
+            targetheadrot = Quaternion.AngleAxis(cursorangle, Vector3.down) * Quaternion.Euler(headorientation);
+        }
+        else
+        {
+            tocursor = cursor.Position - head.position;
+            tocursor.y = 0f;
+            tocursor.Normalize();
+
+            Vector3 cursorheadorient = new Vector3(headorientation.x, 0f, headorientation.z);
+            targetheadrot = Quaternion.LookRotation(tocursor) * Quaternion.Euler(cursorheadorient);
+        }
 
         head.rotation = Quaternion.Slerp(head.rotation, targetheadrot, headsmoothing * Time.deltaTime);
         transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(facingdirection, Vector3.up), rotationsmoothing * Time.deltaTime);
@@ -108,24 +149,16 @@ public class PlayerController : MonoBehaviour
         {
             grounded = GroundState.Grounded;
             rigidbody.velocity = Vector3.zero;
+        }
 
-            if (GameInput.Fire() && shootcooldown.TimerReached() && currenttrash > 0)
-            {
-                shootcooldown.Reset();
-
-                Projectile trashball = GameObject.Instantiate(trashballprefab, firetransform.position, firetransform.rotation);
-                trashball.Initialize(firetransform.forward, firespeed, velocity);
-                currenttrash -= trashballcost;
-
-                if (currenttrash < 0)
-                    currenttrash = 0;
-
-                UpdateUI();
-            }
+        if (GameInput.Fire() && shootcooldown.TimerReached() && currenttrash > 0)
+        {
+            FireTrashBall();
+            shootcooldown.Reset();
         }
 
         // -- we have changed grounded this frame
-        if(grounded != prevgrounded)
+        if (grounded != prevgrounded)
         {
             if(grounded == GroundState.Grounded)
             {
@@ -148,6 +181,15 @@ public class PlayerController : MonoBehaviour
             velocity = Vector3.ClampMagnitude(velocity, maxspeed);
 
             facingdirection = velocity.normalized;
+
+            treadsmoketimer.Decrement();
+            if(treadsmoketimer.TimerReached())
+            {
+                treadsmoketimer.Reset();
+
+                GameObject treadparticles = GameObject.Instantiate(particlestreadsmoke, treadsmokeparticleemitter.position, treadsmokeparticleemitter.rotation);
+                GameObject.Destroy(treadparticles, 2.0f);
+            }
         }
 
         foreach(ScrollTexture t in treads)
@@ -158,6 +200,20 @@ public class PlayerController : MonoBehaviour
         transform.position += velocity;
 
         prevgrounded = grounded;
+    }
+
+    private void FireTrashBall()
+    {
+        Projectile trashball = GameObject.Instantiate(trashballprefab, firetransform.position, firetransform.rotation);
+        Vector3 dir = cursor.HasIntersection ? tocursor : firetransform.forward;
+        trashball.Initialize(dir, firespeed, velocity);
+
+        currenttrash -= trashballcost;
+        if (currenttrash < 0)
+            currenttrash = 0;
+
+        AudioManager.PlayRandomClip2D(sfxfire.sounds);
+        UpdateUI();
     }
 
     public float CameraPredictionSimilarity()
@@ -181,8 +237,9 @@ public class PlayerController : MonoBehaviour
         Rect rect = new Rect(15f, 15f, 200f, 30f);
         float lineheight = 30f;
 
-        GUI.Label(rect, string.Format("State: {0}", grounded.ToString()));
-        rect.y += lineheight;
+        GUI.Label(rect, string.Format("State: {0}", grounded.ToString())); rect.y += lineheight;
+        GUI.Label(rect, string.Format("Trash: {0}/{1}", currenttrash, maxtrash)); rect.y += lineheight;
+        GUI.Label(rect, string.Format("Shoot Cooldown: {0}", shootcooldown.time)); rect.y += lineheight;
     }
 
     public enum GroundState
