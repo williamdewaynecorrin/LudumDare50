@@ -169,8 +169,8 @@ MonoBehaviour:
   playermask:
     serializedVersion: 2
     m_Bits: 1024
-  endperiod: {x: 0, y: 0, z: 0}
-  endamp: {x: 0, y: 0, z: 0}
+  endperiod: {x: 30, y: 20, z: 10}
+  endamp: {x: 0.1, y: 0.1, z: 0.1}
   sfxend:
     clip: {fileID: 8300000, guid: 0bd32da1825292d4c85dfa963350b7c6, type: 3}
     volumemult: 1.1

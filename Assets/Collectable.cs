@@ -63,7 +63,7 @@ public class Collectable : MonoBehaviour, IPauseable
         if (paused)
         {
             rigidbodywaskinematic = rigidbody.isKinematic;
-            rigidbody.isKinematic = false;
+            rigidbody.isKinematic = true;
         }
         else
             rigidbody.isKinematic = rigidbodywaskinematic;

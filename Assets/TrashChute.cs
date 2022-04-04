@@ -18,14 +18,15 @@ public class TrashChute : MonoBehaviour, IPauseable
         spawntimer.Init();
     }
 
-    void Spawn()
+    void Spawn(bool playsfx = true)
     {
         current = GameObject.Instantiate(prefab, spawn.position, Quaternion.identity);
         current.Shoot(spawn.forward * shootvelocity);
 
         spawntimer.Reset();
 
-        AudioManager.PlayRandomClip3D(sfxshoot.sounds, spawn.position);
+        if(playsfx)
+            AudioManager.PlayRandomClip3D(sfxshoot.sounds, spawn.position);
     }
 
     void Update()

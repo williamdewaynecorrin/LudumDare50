@@ -409,6 +409,25 @@ public class PlayerController : MonoBehaviour, IPauseable
         }
     }
 
+    void OnCollisionEnter(Collision other)
+    {
+        if (paused)
+            return;
+
+        Collectable c = other.collider.GetComponent<Collectable>();
+        if (c != null)
+        {
+            if (c.type == CollectableType.Trash)
+            {
+                currenttrash += c.value;
+                currenttrash = currenttrash > maxtrash ? currenttrash : currenttrash;
+
+                UpdateUI();
+            }
+            c.Pickup();
+        }
+    }
+
     public void SetPaused(bool paused)
     {
         this.paused = paused;

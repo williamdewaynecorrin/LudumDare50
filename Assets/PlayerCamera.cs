@@ -135,6 +135,7 @@ public class PlayerCamera : MonoBehaviour
         endrotation = transform.rotation;
         AudioManager.PlayClip2D(sfxend);
         AudioManager.PlayClip2D(sfxend2);
+        MusicManager.FadeOut();
 
         StartCoroutine(EndGameRoutine());
     }
