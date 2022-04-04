@@ -48,12 +48,12 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionTex:
-        m_Texture: {fileID: 2800000, guid: e16958d350748244e8aa6c466e52bbed, type: 3}
+        m_Texture: {fileID: 2800000, guid: aa07c69238bfe184cb96f54f404638da, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: 956280d97d827b1448675649f32b348e, type: 3}
-        m_Scale: {x: 4.5, y: 3.5}
+        m_Scale: {x: 2, y: 2}
         m_Offset: {x: 0.25, y: 0.25}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
@@ -89,7 +89,7 @@ Material:
     - _EmissionCutoff: 0.974
     - _EmissionFlowCutoff: 0.001
     - _EmissionFlowSpeed: 0.76
-    - _EmissionFlowThresh: 0.339
+    - _EmissionFlowThresh: 0.276
     - _EmissionMaxFlowValue: 1
     - _EmissionTexScrollX: 0
     - _EmissionTexScrollY: 0

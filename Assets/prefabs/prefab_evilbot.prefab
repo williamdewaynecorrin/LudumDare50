@@ -59,6 +59,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d800f2c52c79e242b4035dbc763501a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  health: 100
+  movespeed: 0.05
+  homeradius: 0.1
+  distancetoattack: 13
+  rotatelerp: 4
+  particledeath: {fileID: 467684012260819210, guid: 40c672522650e154f97cf428de730184,
+    type: 3}
+  sfxdeath:
+    clip: {fileID: 8300000, guid: 0bd32da1825292d4c85dfa963350b7c6, type: 3}
+    volumemult: 1
 --- !u!54 &1308109979704225308
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -73,7 +83,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 112
+  m_Constraints: 116
   m_CollisionDetection: 1
 --- !u!1001 &1308109981040846343
 PrefabInstance:

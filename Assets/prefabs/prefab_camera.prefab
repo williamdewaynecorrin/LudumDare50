@@ -161,6 +161,7 @@ MonoBehaviour:
   backwardsoffset: {x: 0, y: 2.7, z: -10}
   smooth: 5.5
   lookblend: 0.9
+  offsetlerp: 4
   predictionlerp: 4
   raycastmask:
     serializedVersion: 2
@@ -168,3 +169,11 @@ MonoBehaviour:
   playermask:
     serializedVersion: 2
     m_Bits: 1024
+  endperiod: {x: 0, y: 0, z: 0}
+  endamp: {x: 0, y: 0, z: 0}
+  sfxend:
+    clip: {fileID: 8300000, guid: 0bd32da1825292d4c85dfa963350b7c6, type: 3}
+    volumemult: 1.1
+  sfxend2:
+    clip: {fileID: 8300000, guid: 550391bc8a92cda4e9f1c946b0caadb8, type: 3}
+    volumemult: 1.3

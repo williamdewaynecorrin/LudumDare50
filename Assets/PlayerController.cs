@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IPauseable
 {
     [Header("Movement")]
     public float acceleration = 0.04f;
@@ -13,14 +13,18 @@ public class PlayerController : MonoBehaviour
     [Header("Physics")]
     public new SphereCollider collider;
     public float spherecastdist = 1.0f;
+    public float spherecastforwarddist = 1.0f;
+    public float raycastdist = 5.0f;
     public GravityComponent gravity;
     public LayerMask ground;
+    public float anglethreshold = 45f;
 
     [Header("Rotations")]
     public Transform head;
     public Vector3 headorientation;
     public float headsmoothing = 6.0f;
     public float rotationsmoothing = 1.0f;
+    public Vector3 normaltofacing;
 
     [Header("Treads")]
     public ScrollTexture[] treads;
@@ -50,23 +54,32 @@ public class PlayerController : MonoBehaviour
     public Timer treadsmoketimer;
     public Transform treadsmokeparticleemitter;
     public GameObject particlestreadsmoke;
+    public GameObject particlesdeath;
 
     private new PlayerCamera camera;
     private new Rigidbody rigidbody;
     private Cursor3D cursor;
+    private PlayerHUD playerhud;
+    private DialogueInteraction currentdialogue;
 
-    private Vector3 facingdirection;
+    private Vector3 velocitydir;
     private Vector2 input;
     private Vector3 velocity;
     private Vector3 tocursor;
+    private float lastgroundangle;
 
     private Vector3 center;
     private GroundState grounded = GroundState.Grounded;
     private GroundState prevgrounded;
     private int currenttrash = 0;
+    private Vector3 groundnormaldir = Vector3.up;
+    private Vector3 facingdirection;
+    private RaycastHit lastgroundhit;
+
+    private bool paused = false;
 
     public Vector3 Center => center;
-    public Vector3 FacingDir => facingdirection;
+    public Vector3 FacingDir => velocitydir;
 
     void Awake()
     {
@@ -83,6 +96,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         camera = GameObject.FindObjectOfType<PlayerCamera>();
+        playerhud = GameObject.FindObjectOfType<PlayerHUD>();
         cursor = GameObject.FindObjectOfType<Cursor3D>();
         floatingui.SetTarget(this);
 
@@ -92,6 +106,9 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (paused)
+            return;
+
         input = new Vector2(GameInput.HorizontalInput(), GameInput.VerticalInput());
         if(input == Vector2.zero)
         {
@@ -107,10 +124,31 @@ public class PlayerController : MonoBehaviour
         if (!shootcooldown.TimerReached())
             shootcooldown.Tick(Time.deltaTime);
 
+        if(currentdialogue != null)
+        {
+            if(GameInput.Interact())
+            {
+                currentdialogue.BeginDialogue();
+
+                if (treadsaudio.State() != ESmartAudioState.Stopped && treadsaudio.State() != ESmartAudioState.Stopping)
+                    treadsaudio.BeginStop(20);
+
+                paused = true;
+            }
+        }
+
         float treadsaudiolerp = Mathf.InverseLerp(0f, maxspeed, velocity.magnitude);
         float treadsaudiopitch = Mathf.Lerp(treadsaudiominpitch, treadsaudiomaxpitch, treadsaudiolerp);
         treadsaudio.SetPitch(treadsaudiopitch);
 
+        // -- tf rotation
+        Vector3 facingnoy = facingdirection;
+        facingnoy.y = 0;
+
+        Quaternion targetrot = Quaternion.LookRotation(facingnoy, Vector3.up);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetrot, rotationsmoothing * Time.deltaTime);
+
+        // -- head rotation
         Quaternion targetheadrot = Quaternion.identity;
         if (!cursor.HasIntersection)
         {
@@ -120,7 +158,7 @@ public class PlayerController : MonoBehaviour
 
             float cursorangle = Mathf.Atan2(screenpos.y, screenpos.x);
             cursorangle *= Mathf.Rad2Deg;
-            targetheadrot = Quaternion.AngleAxis(cursorangle, Vector3.down) * Quaternion.Euler(headorientation);
+            targetheadrot =  Quaternion.AngleAxis(cursorangle, Vector3.down) * Quaternion.Euler(headorientation);
         }
         else
         {
@@ -129,26 +167,68 @@ public class PlayerController : MonoBehaviour
             tocursor.Normalize();
 
             Vector3 cursorheadorient = new Vector3(headorientation.x, 0f, headorientation.z);
-            targetheadrot = Quaternion.LookRotation(tocursor) * Quaternion.Euler(cursorheadorient);
+            targetheadrot =  Quaternion.LookRotation(tocursor) * Quaternion.Euler(cursorheadorient);
         }
 
+        //Quaternion rotnoy = new Quaternion(transform.rotation.x, 0f, transform.rotation.z, transform.rotation.w);
+        //targetheadrot = rotnoy * targetheadrot;
         head.rotation = Quaternion.Slerp(head.rotation, targetheadrot, headsmoothing * Time.deltaTime);
-        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(facingdirection, Vector3.up), rotationsmoothing * Time.deltaTime);
     }
 
     void FixedUpdate()
     {
+        if (paused)
+            return;
+
         center = transform.position + collider.center;
+        RaycastHit[] forwardhits = Physics.SphereCastAll(center, collider.radius, velocitydir, spherecastforwarddist, ground);
+        RaycastHit forwardhitbest = new RaycastHit();
+        forwardhitbest.distance = -1;
+        foreach(RaycastHit hit in forwardhits)
+        {
+            float angle = Mathf.Abs(Vector3.Angle(hit.normal, -gravity.Direction));
+            if (angle <= anglethreshold)
+            {
+                lastgroundangle = angle;
+                forwardhitbest = hit;
+            }
+        }
+
         RaycastHit[] groundhits = Physics.SphereCastAll(center, collider.radius, gravity.Direction, spherecastdist, ground);
-        if(groundhits.Length == 0)
+        if(groundhits.Length == 0 && forwardhitbest.distance == -1)
         {
             grounded = GroundState.InAir;
             rigidbody.velocity += gravity.Direction * gravity.Force;
         }
         else
         {
+            int groundhitidx = 0;
+            int i = 0;
+            foreach(RaycastHit hit in groundhits)
+            {
+                if (hit.point != Vector3.zero)
+                {
+                    groundhitidx = i;
+                    break;
+                }
+
+                ++i;
+            }
+
+            RaycastHit usehit = forwardhitbest.distance == -1 ? groundhits[groundhitidx] : forwardhitbest;
+
+            groundnormaldir = usehit.normal;
             grounded = GroundState.Grounded;
             rigidbody.velocity = Vector3.zero;
+
+            ProjectVelocity(usehit);
+            if(!PositionOnGround(usehit))
+            {
+                Vector3 temp = Vector3.Cross(velocitydir, groundnormaldir);
+                facingdirection = Vector3.Cross(temp, groundnormaldir);
+            }
+
+            lastgroundhit = usehit;
         }
 
         if (GameInput.Fire() && shootcooldown.TimerReached() && currenttrash > 0)
@@ -160,14 +240,6 @@ public class PlayerController : MonoBehaviour
         // -- we have changed grounded this frame
         if (grounded != prevgrounded)
         {
-            if(grounded == GroundState.Grounded)
-            {
-                PositionOnGround(groundhits[0]);
-            }
-            else
-            {
-
-            }
         }
 
         if (input == Vector2.zero)
@@ -180,7 +252,7 @@ public class PlayerController : MonoBehaviour
             velocity += move * acceleration;
             velocity = Vector3.ClampMagnitude(velocity, maxspeed);
 
-            facingdirection = velocity.normalized;
+            velocitydir = velocity.normalized;
 
             treadsmoketimer.Decrement();
             if(treadsmoketimer.TimerReached())
@@ -200,6 +272,18 @@ public class PlayerController : MonoBehaviour
         transform.position += velocity;
 
         prevgrounded = grounded;
+    }
+
+    private void ProjectVelocity(RaycastHit hit)
+    {
+        Vector3 wallbinormal = BinormalFromHitNormal(hit.normal);
+        velocity = wallbinormal * velocity.magnitude;
+    }
+
+    private Vector3 BinormalFromHitNormal(Vector3 hitnormal)
+    {
+        Vector3 temp = Vector3.Cross(hitnormal, velocitydir);
+        return Vector3.Cross(temp, hitnormal).normalized;
     }
 
     private void FireTrashBall()
@@ -227,19 +311,40 @@ public class PlayerController : MonoBehaviour
         return velocity * mult;
     }
 
-    private void PositionOnGround(RaycastHit hit)
+    private bool PositionOnGround(RaycastHit hit)
     {
+        if (hit.point == Vector3.zero)
+        {
+            if (Physics.Raycast(center, Vector3.down, out RaycastHit casehit, raycastdist, ground, QueryTriggerInteraction.Ignore))
+            {
+                hit = casehit;
+            }
+            else
+                return false;
+        }
+
+        // -- pos
         transform.position = hit.point + hit.normal * collider.radius - collider.center;
+
+        // -- rot
+        Vector3 temp = Vector3.Cross(velocitydir, groundnormaldir);
+        facingdirection = Vector3.Cross(temp, groundnormaldir);
+
+        return true;
     }
 
     private void OnGUI()
     {
-        Rect rect = new Rect(15f, 15f, 200f, 30f);
+        return;
+
+        Rect rect = new Rect(15f, 15f, 500f, 30f);
         float lineheight = 30f;
 
         GUI.Label(rect, string.Format("State: {0}", grounded.ToString())); rect.y += lineheight;
+        GUI.Label(rect, string.Format("Last Ground Angle: {0}", lastgroundangle.ToString("0.00"))); rect.y += lineheight; 
+        GUI.Label(rect, string.Format("Last Ground HitPos: {0}", lastgroundhit.point)); rect.y += lineheight;
         GUI.Label(rect, string.Format("Trash: {0}/{1}", currenttrash, maxtrash)); rect.y += lineheight;
-        GUI.Label(rect, string.Format("Shoot Cooldown: {0}", shootcooldown.time)); rect.y += lineheight;
+        GUI.Label(rect, string.Format("Shoot Cooldown: {0}", shootcooldown.time)); rect.y += lineheight; 
     }
 
     public enum GroundState
@@ -252,10 +357,14 @@ public class PlayerController : MonoBehaviour
     {
         float fillratio = (float)currenttrash / (float)maxtrash;
         floatingui.SetFill(fillratio);
+        playerhud.HUDSetFill(fillratio);
     }
 
     void OnTriggerEnter(Collider other)
     {
+        if (paused)
+            return;
+
         Collectable c = other.GetComponent<Collectable>();
         if(c != null)
         {
@@ -274,5 +383,41 @@ public class PlayerController : MonoBehaviour
         {
 
         }
+
+        DialogueInteraction i = other.GetComponent<DialogueInteraction>();
+        if(i != null)
+        {
+            i.ActivateInteraction();
+            currentdialogue = i;
+
+            if(i.forceinteraction)
+            {
+                i.BeginDialogue();
+
+                if (treadsaudio.State() != ESmartAudioState.Stopped && treadsaudio.State() != ESmartAudioState.Stopping)
+                    treadsaudio.BeginStop(20);
+            }
+        }
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        DialogueInteraction i = other.GetComponent<DialogueInteraction>();
+        if (i != null)
+        {
+            i.DeactivateInteraction();
+        }
+    }
+
+    public void SetPaused(bool paused)
+    {
+        this.paused = paused;
+    }
+
+    public void EndGame()
+    {
+        GameObject.Destroy(GameObject.Instantiate(particlesdeath, center, Quaternion.identity), 4.0f);
+        camera.EndGame();
+        gameObject.SetActive(false);
     }
 }

@@ -20,11 +20,16 @@ public static class GameInput
 
     public static bool Fire()
     {
-        return Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0);
+        return Input.GetMouseButton(0);
     }
 
     public static bool FireTrigger()
     {
-        return Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0);
+        return Input.GetMouseButtonDown(0);
+    }
+
+    public static bool Interact()
+    {
+        return Input.GetKeyDown(KeyCode.Space);
     }
 }

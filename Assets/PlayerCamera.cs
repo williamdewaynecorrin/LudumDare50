@@ -16,6 +16,10 @@ public class PlayerCamera : MonoBehaviour
     public float predictionlerp = 4.0f;
     public LayerMask raycastmask;
     public LayerMask playermask;
+    public Vector3 endperiod;
+    public Vector3 endamp;
+    public AudioClipSoundControl sfxend;
+    public AudioClipSoundControl sfxend2;
 
     private PlayerController target;
     private Vector3 targetoffset;
@@ -25,6 +29,11 @@ public class PlayerCamera : MonoBehaviour
     private Vector3 lasttargetpos;
     private Quaternion lasttargetrot;
     private Vector3 currentoffset;
+    private CameraZone currentzone;
+
+    private bool endofgame = false;
+    private Vector3 endposition;
+    private Quaternion endrotation;
 
     public Camera Camera => camera;
 
@@ -41,6 +50,20 @@ public class PlayerCamera : MonoBehaviour
 
     void FixedUpdate()
     {
+        if(endofgame)
+        {
+            float endx = Mathf.Sin(Time.time * endperiod.x) * endamp.x;
+            float endy = Mathf.Sin(Time.time * endperiod.y) * endamp.y;
+            float endz = Mathf.Sin(Time.time * endperiod.z) * endamp.z;
+            transform.position = endposition + new Vector3(endx, endy, endz);
+        }
+        else if(currentzone != null)
+        {
+            transform.position = Vector3.Lerp(transform.position, currentzone.look.position, Time.fixedDeltaTime * smooth);
+            transform.rotation = Quaternion.Slerp(transform.rotation, currentzone.look.rotation, smooth * Time.fixedDeltaTime);
+            return;
+        }
+
         lastpredictionval = Mathf.Lerp(lastpredictionval, target.CameraPredictionSimilarity(), predictionlerp * Time.fixedDeltaTime);
 
         // -- calculate target transform attributes
@@ -54,6 +77,8 @@ public class PlayerCamera : MonoBehaviour
                                                 Quaternion.LookRotation(totarget), 
                                                 lookblend);
 
+        Vector3 desiredtotarget = (target.Center - targetpos);
+
         // -- raycast test for walls and such
         float playerdist = kMaxRaycastDist;
         if (Physics.Raycast(transform.position, totarget, out RaycastHit playerinfo, kMaxRaycastDist, playermask, QueryTriggerInteraction.Ignore))
@@ -61,12 +86,22 @@ public class PlayerCamera : MonoBehaviour
             playerdist = playerinfo.distance;
         }
         else
-            Debug.LogError("Player not found for raycast collision: this should never happen");
-
-        if (Physics.Raycast(transform.position, totarget, out RaycastHit objectinfo, playerdist, raycastmask, QueryTriggerInteraction.Ignore))
         {
-            lasttargetpos = transform.position;
-            lasttargetrot = transform.rotation;
+            Debug.LogError("Player not found for raycast collision: this should never happen");
+            playerdist = kMaxRaycastDist;
+        }
+
+        if (Physics.Raycast(targetpos, desiredtotarget.normalized, out RaycastHit objectinfo, desiredtotarget.magnitude, raycastmask, QueryTriggerInteraction.Ignore))
+        {
+            // -- something is in the way
+            if (Physics.Raycast(target.Center, -totarget, out RaycastHit placementinfo, kMaxRaycastDist, raycastmask, QueryTriggerInteraction.Ignore))
+            {
+                lasttargetpos = placementinfo.point;
+                //transform.position = lasttargetpos;
+                lasttargetrot = targetrot;
+            }
+            else
+                Debug.LogError("Error calculating object interference");
         }
         else
         {
@@ -86,5 +121,27 @@ public class PlayerCamera : MonoBehaviour
     public Vector3 TargetRightDirection()
     {
         return new Vector3(transform.right.x, 0f, transform.right.z).normalized;
+    }
+
+    public void SetZone(CameraZone zone)
+    {
+        currentzone = zone;
+    }
+
+    public void EndGame()
+    {
+        endofgame = true;
+        endposition = transform.position;
+        endrotation = transform.rotation;
+        AudioManager.PlayClip2D(sfxend);
+        AudioManager.PlayClip2D(sfxend2);
+
+        StartCoroutine(EndGameRoutine());
+    }
+
+    private IEnumerator EndGameRoutine()
+    {
+        yield return new WaitForSeconds(5.0f);
+        Application.Quit();
     }
 }

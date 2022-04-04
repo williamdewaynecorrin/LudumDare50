@@ -37,7 +37,13 @@ public class Projectile : MonoBehaviour
         Enemy e = c.gameObject.GetComponent<Enemy>();
         if(e != null)
         {
+            e.TakeDamage(25f);
+        }
 
+        DoorButton b = c.gameObject.GetComponent<DoorButton>();
+        if(b != null)
+        {
+            b.PressButton();
         }
 
         GameObject impactparticles = GameObject.Instantiate(particleimpact, c.contacts[0].point + c.contacts[0].normal * 0.001f, Quaternion.LookRotation(c.contacts[0].normal));

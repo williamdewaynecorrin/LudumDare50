@@ -10,6 +10,7 @@ public class FloatingUI : MonoBehaviour
     private PlayerController target;
     private Vector3 targetoffset;
 
+
     public void SetTarget(PlayerController target)
     {
         this.target = target;
